@@ -97,7 +97,7 @@ export default function ProfilePage() {
 
       const API_URL = import.meta.env.VITE_API_URL || 'https://vitabrasil-backend-production.up.railway.app'
       
-      const response = await fetch(`${API_URL}/users/profile`, {
+      const response = await fetch(`${API_URL}/api/users/profile`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

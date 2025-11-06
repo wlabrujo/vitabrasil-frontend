@@ -131,9 +131,16 @@ export default function FinancialPage() {
       <Header />
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Finanças</h1>
-            <p className="text-gray-600 mt-2">Gerencie seus dados bancários e preços de consultas</p>
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Finanças</h1>
+              <p className="text-gray-600 mt-2">Gerencie seus dados bancários e preços de consultas</p>
+            </div>
+            {!isEditing && (
+              <Button variant="outline" onClick={() => setIsEditing(true)}>
+                Editar
+              </Button>
+            )}
           </div>
 
           {error && (
@@ -151,16 +158,9 @@ export default function FinancialPage() {
           {/* Dados Bancários */}
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <CreditCard className="h-5 w-5 mr-2 text-green-600" />
-                  Dados Bancários
-                </div>
-                {!isEditing && (
-                  <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                    Editar
-                  </Button>
-                )}
+              <CardTitle className="flex items-center">
+                <CreditCard className="h-5 w-5 mr-2 text-green-600" />
+                Dados Bancários
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">

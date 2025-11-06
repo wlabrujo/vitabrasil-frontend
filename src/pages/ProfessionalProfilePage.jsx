@@ -1,33 +1,55 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Star, MapPin, DollarSign, Calendar, Clock, CheckCircle2, Award } from 'lucide-react'
+import { Star, MapPin, DollarSign, Calendar, Clock, CheckCircle2, Award, User } from 'lucide-react'
 import Header from '@/components/Header'
-import { mockProfessionals } from '@/data/mockProfessionals'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function ProfessionalProfilePage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const [professional, setProfessional] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
   const [selectedType, setSelectedType] = useState('')
-  const [showBooking, setShowBooking] = useState(false)
 
-  const professional = mockProfessionals.find(p => p.id === parseInt(id))
-
-  if (!professional) {
-    return <div>Profissional não encontrado</div>
-  }
+  // Buscar profissional da API
+  useEffect(() => {
+    const fetchProfessional = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        const API_URL = import.meta.env.VITE_API_URL || 'https://vitabrasil-backend-production.up.railway.app'
+        const response = await fetch(`${API_URL}/api/professionals/${id}`)
+        
+        if (!response.ok) {
+          throw new Error('Profissional não encontrado')
+        }
+        
+        const data = await response.json()
+        setProfessional(data.professional)
+      } catch (err) {
+        console.error('Error fetching professional:', err)
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchProfessional()
+  }, [id])
 
   const availableDates = [
-    '15/10/2025',
-    '16/10/2025',
-    '17/10/2025',
-    '18/10/2025',
-    '19/10/2025'
+    '15/11/2025',
+    '16/11/2025',
+    '17/11/2025',
+    '18/11/2025',
+    '19/11/2025'
   ]
 
   const availableTimes = [
@@ -47,8 +69,35 @@ export default function ProfessionalProfilePage() {
       return
     }
 
-    alert(`Consulta agendada com sucesso!\n\nProfissional: ${professional.name}\nData: ${selectedDate}\nHorário: ${selectedTime}\nTipo: ${selectedType}\nValor: R$ ${professional.price}`)
+    alert(`Consulta agendada com sucesso!\n\nProfissional: ${professional.name}\nData: ${selectedDate}\nHorário: ${selectedTime}\nTipo: ${selectedType}`)
     navigate('/appointments')
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
+        <div className="text-lg text-gray-600">Carregando...</div>
+      </div>
+    )
+  }
+
+  if (error || !professional) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+        <Header />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Card>
+            <CardContent className="p-8 text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Profissional não encontrado</h2>
+              <p className="text-gray-600 mb-6">{error || 'O profissional que você procura não existe.'}</p>
+              <Button onClick={() => navigate('/search')}>
+                Voltar para Busca
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -62,60 +111,73 @@ export default function ProfessionalProfilePage() {
             <Card>
               <CardContent className="p-8">
                 <div className="flex items-start gap-6 mb-6">
-                  <img 
-                    src={professional.photo} 
-                    alt={professional.name}
-                    className="w-32 h-32 rounded-full object-cover"
-                  />
+                  {professional.photo_url ? (
+                    <img 
+                      src={professional.photo_url} 
+                      alt={professional.name}
+                      className="w-32 h-32 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-32 h-32 rounded-full bg-gradient-to-br from-green-400 to-blue-400 flex items-center justify-center">
+                      <User className="h-16 w-16 text-white" />
+                    </div>
+                  )}
                   <div className="flex-1">
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                      {professional.name}
+                      {professional.preferred_name || professional.name}
                     </h1>
                     <p className="text-xl text-gray-600 mb-3">{professional.profession}</p>
                     
                     <div className="flex items-center gap-4 mb-3">
                       <div className="flex items-center gap-1">
                         <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                        <span className="font-semibold">{professional.rating}</span>
-                        <span className="text-gray-500">({professional.reviewCount} avaliações)</span>
+                        <span className="font-semibold">
+                          {professional.average_rating ? professional.average_rating.toFixed(1) : 'Novo'}
+                        </span>
+                        {professional.total_reviews > 0 && (
+                          <span className="text-gray-500">({professional.total_reviews} avaliações)</span>
+                        )}
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-gray-600 mb-2">
-                      <Award className="h-4 w-4" />
-                      <span>{professional.regulatoryBody} {professional.registrationNumber}</span>
-                    </div>
+                    {professional.regulatoryBody && professional.registrationNumber && (
+                      <div className="flex items-center gap-2 text-gray-600 mb-2">
+                        <Award className="h-4 w-4" />
+                        <span>{professional.regulatoryBody} {professional.registrationNumber}</span>
+                      </div>
+                    )}
 
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <MapPin className="h-4 w-4" />
-                      <span>{professional.city}, {professional.state}</span>
-                    </div>
+                    {professional.address && professional.address.city && (
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <MapPin className="h-4 w-4" />
+                        <span>{professional.address.city}{professional.address.state ? `, ${professional.address.state}` : ''}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="border-t pt-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">Especialidades</h2>
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {professional.specialties.map((spec, i) => (
-                      <span key={i} className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
-                        {spec}
-                      </span>
-                    ))}
-                  </div>
+                  {professional.specialties && professional.specialties.length > 0 && (
+                    <>
+                      <h2 className="text-xl font-bold text-gray-900 mb-3">Especialidades</h2>
+                      <div className="flex flex-wrap gap-2 mb-6">
+                        {professional.specialties.map((spec, i) => (
+                          <span key={i} className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
+                            {spec}
+                          </span>
+                        ))}
+                      </div>
+                    </>
+                  )}
 
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">Sobre</h2>
-                  <p className="text-gray-700 leading-relaxed mb-6">
-                    {professional.description}
-                  </p>
-
-                  <h2 className="text-xl font-bold text-gray-900 mb-3">Tipos de Atendimento</h2>
-                  <div className="flex gap-2">
-                    {professional.availableTypes.map((type, i) => (
-                      <span key={i} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
-                        {type}
-                      </span>
-                    ))}
-                  </div>
+                  {professional.description && (
+                    <>
+                      <h2 className="text-xl font-bold text-gray-900 mb-3">Sobre</h2>
+                      <p className="text-gray-700 leading-relaxed mb-6">
+                        {professional.description}
+                      </p>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -126,29 +188,17 @@ export default function ProfessionalProfilePage() {
                 <CardTitle>Avaliações dos Pacientes</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {[
-                    { name: 'Maria Silva', rating: 5, comment: 'Excelente profissional! Muito atenciosa e competente.', date: '10/10/2025' },
-                    { name: 'João Santos', rating: 5, comment: 'Recomendo! Tratamento eficaz e humanizado.', date: '08/10/2025' },
-                    { name: 'Ana Costa', rating: 4, comment: 'Muito boa consulta, profissional dedicado.', date: '05/10/2025' }
-                  ].map((review, i) => (
-                    <div key={i} className="border-b pb-4 last:border-0">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="font-semibold text-gray-900">{review.name}</p>
-                        <span className="text-sm text-gray-500">{review.date}</span>
-                      </div>
-                      <div className="flex items-center gap-1 mb-2">
-                        {[...Array(5)].map((_, i) => (
-                          <Star 
-                            key={i} 
-                            className={`h-4 w-4 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
-                          />
-                        ))}
-                      </div>
-                      <p className="text-gray-600">{review.comment}</p>
-                    </div>
-                  ))}
-                </div>
+                {professional.total_reviews > 0 ? (
+                  <div className="space-y-4">
+                    <p className="text-gray-600">Sistema de avaliações em desenvolvimento</p>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Star className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-600">Este profissional ainda não possui avaliações</p>
+                    <p className="text-sm text-gray-500 mt-2">Seja o primeiro a avaliar!</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -157,13 +207,7 @@ export default function ProfessionalProfilePage() {
           <div>
             <Card className="sticky top-20">
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Agendar Consulta</span>
-                  <div className="flex items-center text-green-600">
-                    <DollarSign className="h-5 w-5" />
-                    <span className="text-2xl font-bold">{professional.price}</span>
-                  </div>
-                </CardTitle>
+                <CardTitle>Agendar Consulta</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -176,9 +220,8 @@ export default function ProfessionalProfilePage() {
                     className="w-full p-2 border border-gray-300 rounded-md"
                   >
                     <option value="">Selecione</option>
-                    {professional.availableTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
+                    <option value="Presencial">Presencial</option>
+                    <option value="Domiciliar">Domiciliar</option>
                   </select>
                 </div>
 
@@ -230,7 +273,6 @@ export default function ProfessionalProfilePage() {
                       <p><strong>Data:</strong> {selectedDate}</p>
                       <p><strong>Horário:</strong> {selectedTime}</p>
                       <p><strong>Tipo:</strong> {selectedType}</p>
-                      <p><strong>Valor:</strong> R$ {professional.price}</p>
                     </div>
                   </div>
                 )}

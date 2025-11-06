@@ -7,9 +7,11 @@ import { Search, MapPin, Star, DollarSign, Filter, User } from 'lucide-react'
 import Header from '@/components/Header'
 import { allSpecialties } from '@/data/professions'
 import { brazilianStates } from '@/data/states'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function SearchPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedSpecialty, setSelectedSpecialty] = useState('')
   const [selectedState, setSelectedState] = useState('')
@@ -47,7 +49,11 @@ export default function SearchPage() {
         }
         
         const data = await response.json()
-        setProfessionals(data.professionals || [])
+        // Filtrar para não mostrar o próprio usuário
+        const filteredProfessionals = (data.professionals || []).filter(
+          prof => prof.id !== user?.id
+        )
+        setProfessionals(filteredProfessionals)
       } catch (err) {
         console.error('Error fetching professionals:', err)
         setError(err.message)

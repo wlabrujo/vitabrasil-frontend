@@ -28,7 +28,7 @@ export default function AppointmentsPage() {
       const API_URL = import.meta.env.VITE_API_URL || 'https://vitabrasil-backend-production.up.railway.app'
       const token = localStorage.getItem('vitabrasil_token')
       
-      const response = await fetch(`${API_URL}/api/appointments`, {
+      const response = await fetch(`${API_URL}/api/appointments/`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

@@ -104,8 +104,8 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Consultas Agendadas</p>
-                      <p className="text-3xl font-bold text-gray-900">0</p>
-                      <p className="text-xs text-gray-500 mt-1">Nenhuma consulta agendada</p>
+                      <p className="text-3xl font-bold text-gray-900">{appointments.filter(apt => apt.status !== 'cancelled' && apt.status !== 'completed').length}</p>
+                      <p className="text-xs text-gray-500 mt-1">{appointments.filter(apt => apt.status !== 'cancelled' && apt.status !== 'completed').length === 0 ? 'Nenhuma consulta agendada' : `${appointments.filter(apt => apt.status !== 'cancelled' && apt.status !== 'completed').length} consulta(s)`}</p>
                     </div>
                     <Calendar className="h-12 w-12 text-green-600 opacity-20" />
                   </div>
@@ -130,7 +130,7 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Histórico</p>
-                      <p className="text-3xl font-bold text-gray-900">0</p>
+                      <p className="text-3xl font-bold text-gray-900">{appointments.filter(apt => apt.status === 'completed').length}</p>
                       <p className="text-xs text-gray-500 mt-1">Consultas realizadas</p>
                     </div>
                     <FileText className="h-12 w-12 text-blue-600 opacity-20" />
@@ -194,13 +194,37 @@ export default function DashboardPage() {
                   <CardTitle>Próximas Consultas</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-12">
-                    <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-600 mb-4">Você ainda não tem consultas agendadas</p>
-                    <Button onClick={() => navigate('/search')}>
-                      Buscar Profissionais
-                    </Button>
-                  </div>
+                  {appointments.filter(apt => apt.status !== 'cancelled' && apt.status !== 'completed').length === 0 ? (
+                    <div className="text-center py-12">
+                      <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-600 mb-4">Você ainda não tem consultas agendadas</p>
+                      <Button onClick={() => navigate('/search')}>
+                        Buscar Profissionais
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {appointments.filter(apt => apt.status !== 'cancelled' && apt.status !== 'completed').slice(0, 3).map(apt => (
+                        <div key={apt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-gradient-to-r from-green-600 to-blue-600 flex items-center justify-center text-white font-bold">
+                              {apt.professional?.name?.charAt(0) || 'P'}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-gray-900">{apt.professional?.name}</p>
+                              <p className="text-sm text-gray-600">{apt.date.split('-').reverse().join('/')} - {apt.time}</p>
+                            </div>
+                          </div>
+                          <Button size="sm" onClick={() => navigate('/appointments')}>Ver</Button>
+                        </div>
+                      ))}
+                      {appointments.filter(apt => apt.status !== 'cancelled' && apt.status !== 'completed').length > 3 && (
+                        <Button variant="outline" className="w-full" onClick={() => navigate('/appointments')}>
+                          Ver todas ({appointments.filter(apt => apt.status !== 'cancelled' && apt.status !== 'completed').length})
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -294,30 +318,6 @@ export default function DashboardPage() {
                       <p className="font-semibold text-gray-900">
                         {user.address?.city && user.address?.state ? `${user.address.city}, ${user.address.state}` : 'Não informado'}
                       </p>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t">
-                    <p className="text-sm text-gray-600 mb-2">Tipos de Atendimento</p>
-                    <div className="flex flex-wrap gap-2">
-                      {user.online_service && (
-                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                          Online {user.online_price ? `- R$ ${user.online_price}` : ''}
-                        </span>
-                      )}
-                      {user.in_person_service && (
-                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                          Presencial {user.in_person_price ? `- R$ ${user.in_person_price}` : ''}
-                        </span>
-                      )}
-                      {user.home_service && (
-                        <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
-                          Domiciliar {user.home_price ? `- R$ ${user.home_price}` : ''}
-                        </span>
-                      )}
-                      {!user.online_service && !user.in_person_service && !user.home_service && (
-                        <span className="text-gray-500 text-sm">Nenhum tipo de atendimento configurado</span>
-                      )}
                     </div>
                   </div>
 

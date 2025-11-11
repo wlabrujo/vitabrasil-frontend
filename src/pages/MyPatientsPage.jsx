@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Heart, ArrowLeft, Search, Calendar, Phone, Mail, FileText } from 'lucide-react'
+import { Search, Calendar, Phone, Mail, FileText } from 'lucide-react'
+import Header from '@/components/Header'
 
 export default function MyPatientsPage() {
   const navigate = useNavigate()
@@ -20,25 +21,7 @@ export default function MyPatientsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="mr-4 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <Heart className="w-8 h-8 text-green-600" />
-              <span className="ml-2 text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                VitaBrasil
-              </span>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

@@ -116,6 +116,93 @@ export default function AppointmentsPage() {
     return timeStr.substring(0, 5) // HH:MM
   }
 
+  const handleConfirm = async (appointmentId) => {
+    if (!confirm('Confirmar este agendamento?')) {
+      return
+    }
+
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'https://vitabrasil-backend-production.up.railway.app'
+      const token = localStorage.getItem('vitabrasil_token')
+      
+      const response = await fetch(`${API_URL}/api/appointments/${appointmentId}/confirm`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Erro ao confirmar consulta')
+      }
+      
+      alert('Consulta confirmada com sucesso!')
+      fetchAppointments()
+    } catch (err) {
+      alert(err.message)
+    }
+  }
+
+  const handleComplete = async (appointmentId) => {
+    if (!confirm('Marcar esta consulta como realizada? O paciente terá 48h para contestar.')) {
+      return
+    }
+
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'https://vitabrasil-backend-production.up.railway.app'
+      const token = localStorage.getItem('vitabrasil_token')
+      
+      const response = await fetch(`${API_URL}/api/appointments/${appointmentId}/complete`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Erro ao marcar como realizada')
+      }
+      
+      alert('Consulta marcada como realizada! Pagamento será liberado em 48h se não houver contestação.')
+      fetchAppointments()
+    } catch (err) {
+      alert(err.message)
+    }
+  }
+
+  const handleDispute = async (appointmentId) => {
+    const reason = prompt('Por favor, descreva o motivo da contestação:')
+    if (!reason) {
+      return
+    }
+
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'https://vitabrasil-backend-production.up.railway.app'
+      const token = localStorage.getItem('vitabrasil_token')
+      
+      const response = await fetch(`${API_URL}/api/appointments/${appointmentId}/dispute`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reason })
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Erro ao contestar consulta')
+      }
+      
+      alert('Contestação registrada! Nossa equipe entrará em contato.')
+      fetchAppointments()
+    } catch (err) {
+      alert(err.message)
+    }
+  }
+
   const handleCancel = async (appointmentId) => {
     if (!confirm('Tem certeza que deseja cancelar esta consulta?')) {
       return
@@ -283,15 +370,57 @@ export default function AppointmentsPage() {
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(apt.status)}`}>
                       {getStatusLabel(apt.status)}
                     </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleCancel(apt.id)}
-                      className="text-red-600 hover:bg-red-50 border-red-300"
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      Cancelar
-                    </Button>
+                    
+                    {/* Botões para PROFISSIONAL */}
+                    {!isPatient && apt.status === 'pending' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleConfirm(apt.id)}
+                        className="text-green-600 hover:bg-green-50 border-green-300"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Confirmar
+                      </Button>
+                    )}
+                    
+                    {!isPatient && (apt.status === 'pending' || apt.status === 'confirmed') && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleComplete(apt.id)}
+                        className="text-blue-600 hover:bg-blue-50 border-blue-300"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Marcar Realizada
+                      </Button>
+                    )}
+                    
+                    {/* Botão Cancelar (ambos) */}
+                    {(apt.status === 'pending' || apt.status === 'confirmed') && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCancel(apt.id)}
+                        className="text-red-600 hover:bg-red-50 border-red-300"
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Cancelar
+                      </Button>
+                    )}
+                    
+                    {/* Botão Contestar (paciente) */}
+                    {isPatient && apt.status === 'completed' && apt.can_dispute && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDispute(apt.id)}
+                        className="text-orange-600 hover:bg-orange-50 border-orange-300"
+                      >
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        Contestar
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -343,15 +472,57 @@ export default function AppointmentsPage() {
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(apt.status)}`}>
                       {getStatusLabel(apt.status)}
                     </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleCancel(apt.id)}
-                      className="text-red-600 hover:bg-red-50 border-red-300"
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      Cancelar
-                    </Button>
+                    
+                    {/* Botões para PROFISSIONAL */}
+                    {!isPatient && apt.status === 'pending' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleConfirm(apt.id)}
+                        className="text-green-600 hover:bg-green-50 border-green-300"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Confirmar
+                      </Button>
+                    )}
+                    
+                    {!isPatient && (apt.status === 'pending' || apt.status === 'confirmed') && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleComplete(apt.id)}
+                        className="text-blue-600 hover:bg-blue-50 border-blue-300"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Marcar Realizada
+                      </Button>
+                    )}
+                    
+                    {/* Botão Cancelar (ambos) */}
+                    {(apt.status === 'pending' || apt.status === 'confirmed') && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCancel(apt.id)}
+                        className="text-red-600 hover:bg-red-50 border-red-300"
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Cancelar
+                      </Button>
+                    )}
+                    
+                    {/* Botão Contestar (paciente) */}
+                    {isPatient && apt.status === 'completed' && apt.can_dispute && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDispute(apt.id)}
+                        className="text-orange-600 hover:bg-orange-50 border-orange-300"
+                      >
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        Contestar
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>

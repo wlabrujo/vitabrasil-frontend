@@ -123,9 +123,9 @@ export default function ProfessionalProfilePage() {
       
       // Determinar preço baseado no tipo
       let price = 0
-      if (selectedType === 'Online') price = professional.online_price
-      else if (selectedType === 'Presencial') price = professional.in_person_price
-      else if (selectedType === 'Domiciliar') price = professional.home_price
+      if (selectedType === 'Online') price = professional.pricing?.online
+      else if (selectedType === 'Presencial') price = professional.pricing?.in_person
+      else if (selectedType === 'Domiciliar') price = professional.pricing?.home
       
       const response = await fetch(`${API_URL}/api/appointments/`, {
         method: 'POST',
@@ -302,9 +302,9 @@ export default function ProfessionalProfilePage() {
                     className="w-full p-2 border border-gray-300 rounded-md"
                   >
                     <option value="">Selecione</option>
-                    {professional.online_enabled && <option value="Online">Online - R$ {professional.online_price?.toFixed(2)}</option>}
-                    {professional.in_person_enabled && <option value="Presencial">Presencial - R$ {professional.in_person_price?.toFixed(2)}</option>}
-                    {professional.home_enabled && <option value="Domiciliar">Domiciliar - R$ {professional.home_price?.toFixed(2)}</option>}
+                    {professional.pricing?.online_enabled && <option value="Online">Online - R$ {professional.pricing.online?.toFixed(2)}</option>}
+                    {professional.pricing?.in_person_enabled && <option value="Presencial">Presencial - R$ {professional.pricing.in_person?.toFixed(2)}</option>}
+                    {professional.pricing?.home_enabled && <option value="Domiciliar">Domiciliar - R$ {professional.pricing.home?.toFixed(2)}</option>}
                   </select>
                 </div>
 

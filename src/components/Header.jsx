@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { Heart, LogOut, User, Calendar, MessageCircle, Search, DollarSign, Users } from 'lucide-react'
+import { Heart, LogOut, User, Calendar, MessageCircle, Search, DollarSign, Users, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -53,12 +53,20 @@ export default function Header() {
 
                 {/* Menu específico para PROFISSIONAIS */}
                 {isProfessional && (
-                  <Link to="/financial">
-                    <Button variant="ghost" size="sm">
-                      <DollarSign className="h-4 w-4 mr-2" />
-                      Finanças
-                    </Button>
-                  </Link>
+                  <>
+                    <Link to="/schedule">
+                      <Button variant="ghost" size="sm">
+                        <Clock className="h-4 w-4 mr-2" />
+                        Agenda
+                      </Button>
+                    </Link>
+                    <Link to="/financial">
+                      <Button variant="ghost" size="sm">
+                        <DollarSign className="h-4 w-4 mr-2" />
+                        Finanças
+                      </Button>
+                    </Link>
+                  </>
                 )}
 
                 <Link to="/appointments">

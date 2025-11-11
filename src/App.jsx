@@ -14,6 +14,7 @@ import TermsOfServicePage from './pages/TermsOfServicePage'
 import TermsPage from './pages/TermsPage'
 import MyPatientsPage from './pages/MyPatientsPage'
 import FinancialPage from './pages/FinancialPage'
+import SchedulePage from './pages/SchedulePage'
 import './App.css'
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/my-patients" element={<MyPatientsPage />} />
           <Route path="/financial" element={<FinancialPage />} />
+          <Route path="/schedule" element={<SchedulePage />} />
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
           <Route path="/terms" element={<TermsOfServicePage />} />
           <Route path="/politica-de-privacidade" element={<PrivacyPolicyPage />} />

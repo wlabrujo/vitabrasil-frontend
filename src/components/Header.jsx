@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { Heart, LogOut, User, Calendar, MessageCircle, Search, DollarSign, Users, Clock } from 'lucide-react'
+import { Heart, LogOut, User, Calendar, MessageCircle, Search, DollarSign, Users, Clock, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -82,6 +82,16 @@ export default function Header() {
                     <Button variant="ghost" size="sm">
                       <Users className="h-4 w-4 mr-2" />
                       Meus Pacientes
+                    </Button>
+                  </Link>
+                )}
+
+                {/* Disputas - apenas para admin */}
+                {user?.email === 'admin@vitabrasil.com' && (
+                  <Link to="/admin">
+                    <Button variant="ghost" size="sm" className="text-orange-600 hover:text-orange-700 hover:bg-orange-50">
+                      <AlertCircle className="h-4 w-4 mr-2" />
+                      Disputas
                     </Button>
                   </Link>
                 )}

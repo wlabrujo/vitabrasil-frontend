@@ -8,6 +8,56 @@ import Header from '@/components/Header'
 export default function DashboardPage() {
   const { user, loading } = useAuth()
   const navigate = useNavigate()
+  const [appointments, setAppointments] = useState([])
+  const [loadingData, setLoadingData] = useState(true)
+
+  useEffect(() => {
+    if (user) {
+      fetchAppointments()
+    }
+  }, [user])
+
+  const fetchAppointments = async () => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'https://vitabrasil-backend-production.up.railway.app'
+      const token = localStorage.getItem('vitabrasil_token')
+      
+      const response = await fetch(`${API_URL}/api/appointments/`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setAppointments(data.appointments || [])
+      }
+    } catch (error) {
+      console.error('Error fetching appointments:', error)
+    } finally {
+      setLoadingData(false)
+    }
+  }
+
+  // Calcular métricas
+  const today = new Date().toISOString().split('T')[0]
+  const currentMonth = new Date().getMonth()
+  const currentYear = new Date().getFullYear()
+
+  const todayAppointments = appointments.filter(apt => 
+    apt.date === today && apt.status !== 'cancelled'
+  )
+
+  const uniquePatients = new Set(appointments.map(apt => apt.patient?.id)).size
+
+  const monthlyRevenue = appointments
+    .filter(apt => {
+      const aptDate = new Date(apt.date)
+      return aptDate.getMonth() === currentMonth && 
+             aptDate.getFullYear() === currentYear &&
+             apt.status !== 'cancelled'
+    })
+    .reduce((sum, apt) => sum + (apt.professional_amount || apt.price * 0.9), 0)
 
   // Wait for auth to load
   if (loading) {
@@ -164,8 +214,8 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Consultas Hoje</p>
-                      <p className="text-3xl font-bold text-gray-900">0</p>
-                      <p className="text-xs text-gray-500 mt-1">Nenhuma agendada</p>
+                      <p className="text-3xl font-bold text-gray-900">{todayAppointments.length}</p>
+                      <p className="text-xs text-gray-500 mt-1">{todayAppointments.length === 0 ? 'Nenhuma agendada' : `${todayAppointments.length} consulta(s)`}</p>
                     </div>
                     <Calendar className="h-12 w-12 text-green-600 opacity-20" />
                   </div>
@@ -177,8 +227,8 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Total de Pacientes</p>
-                      <p className="text-3xl font-bold text-gray-900">0</p>
-                      <p className="text-xs text-gray-500 mt-1">Aguardando primeiro paciente</p>
+                      <p className="text-3xl font-bold text-gray-900">{uniquePatients}</p>
+                      <p className="text-xs text-gray-500 mt-1">{uniquePatients === 0 ? 'Aguardando primeiro paciente' : `${uniquePatients} paciente(s)`}</p>
                     </div>
                     <Users className="h-12 w-12 text-blue-600 opacity-20" />
                   </div>
@@ -190,7 +240,7 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600 mb-1">Receita Mensal</p>
-                      <p className="text-2xl font-bold text-gray-900">R$ 0</p>
+                      <p className="text-2xl font-bold text-gray-900">R$ {monthlyRevenue.toFixed(2)}</p>
                       <p className="text-xs text-gray-500 mt-1">Neste mês</p>
                     </div>
                     <DollarSign className="h-12 w-12 text-green-600 opacity-20" />
@@ -284,11 +334,30 @@ export default function DashboardPage() {
                   <CardTitle>Agenda de Hoje</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-12">
-                    <Clock className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-600 mb-2">Nenhuma consulta agendada para hoje</p>
-                    <p className="text-sm text-gray-500">Seus pacientes poderão agendar consultas pelo seu perfil</p>
-                  </div>
+                  {todayAppointments.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Clock className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-600 mb-2">Nenhuma consulta agendada para hoje</p>
+                      <p className="text-sm text-gray-500">Seus pacientes poderão agendar consultas pelo seu perfil</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {todayAppointments.map(apt => (
+                        <div key={apt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-gradient-to-r from-green-600 to-blue-600 flex items-center justify-center text-white font-bold">
+                              {apt.patient?.name?.charAt(0) || 'P'}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-gray-900">{apt.patient?.name}</p>
+                              <p className="text-sm text-gray-600">{apt.time} - {apt.type === 'online' ? 'Online' : apt.type === 'in_person' ? 'Presencial' : 'Domiciliar'}</p>
+                            </div>
+                          </div>
+                          <span className="text-sm font-medium text-green-600">R$ {apt.price?.toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

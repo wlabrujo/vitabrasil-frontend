@@ -212,7 +212,7 @@ export default function DashboardPage() {
                             </div>
                             <div>
                               <p className="font-semibold text-gray-900">{apt.professional?.name}</p>
-                              <p className="text-sm text-gray-600">{apt.date.split('-').reverse().join('/')} - {apt.time}</p>
+                              <p className="text-sm text-gray-600">{new Date(apt.date + 'T00:00:00Z').toLocaleDateString('pt-BR', {timeZone: 'America/Sao_Paulo'})} - {apt.time}</p>
                             </div>
                           </div>
                           <Button size="sm" onClick={() => navigate('/appointments')}>Ver</Button>

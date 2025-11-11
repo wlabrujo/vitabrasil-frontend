@@ -104,11 +104,13 @@ export default function AppointmentsPage() {
   }
 
   const formatDate = (dateStr) => {
-    const date = new Date(dateStr)
+    // Adicionar 'T00:00:00Z' para forçar UTC e evitar mudança de dia
+    const date = new Date(dateStr + 'T00:00:00Z')
     return date.toLocaleDateString('pt-BR', { 
       day: '2-digit', 
       month: 'long', 
-      year: 'numeric' 
+      year: 'numeric',
+      timeZone: 'America/Sao_Paulo'
     })
   }
 

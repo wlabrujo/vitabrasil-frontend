@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Calendar, Clock, MapPin, User, Video, X, CheckCircle, AlertCircle } from 'lucide-react'
+import { Calendar, Clock, MapPin, User, Video, X, CheckCircle, AlertCircle, Star } from 'lucide-react'
 import Header from '@/components/Header'
 import { useAuth } from '@/contexts/AuthContext'
+import ReviewModal from '@/components/ReviewModal'
 
 export default function AppointmentsPage() {
   const { user, loading: authLoading } = useAuth()
@@ -13,6 +14,8 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [reviewModalOpen, setReviewModalOpen] = useState(false)
+  const [selectedAppointment, setSelectedAppointment] = useState(null)
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -232,6 +235,37 @@ export default function AppointmentsPage() {
     }
   }
 
+  const handleReview = (appointment) => {
+    setSelectedAppointment(appointment)
+    setReviewModalOpen(true)
+  }
+
+  const submitReview = async (appointmentId, rating, comment) => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'https://vitabrasil-backend-production.up.railway.app'
+      const token = localStorage.getItem('vitabrasil_token')
+      
+      const response = await fetch(`${API_URL}/api/reviews/appointment/${appointmentId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ rating, comment })
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Erro ao enviar avaliação')
+      }
+      
+      alert('⭐ Avaliação enviada com sucesso!')
+      fetchAppointments() // Recarregar lista
+    } catch (err) {
+      throw err
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
       <Header />
@@ -423,6 +457,19 @@ export default function AppointmentsPage() {
                         Contestar
                       </Button>
                     )}
+                    
+                    {/* Botão Avaliar (paciente) */}
+                    {isPatient && apt.status === 'completed' && !apt.has_review && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleReview(apt)}
+                        className="text-yellow-600 hover:bg-yellow-50 border-yellow-300"
+                      >
+                        <Star className="h-4 w-4 mr-1" />
+                        Avaliar
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -525,6 +572,19 @@ export default function AppointmentsPage() {
                         Contestar
                       </Button>
                     )}
+                    
+                    {/* Botão Avaliar (paciente) */}
+                    {isPatient && apt.status === 'completed' && !apt.has_review && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleReview(apt)}
+                        className="text-yellow-600 hover:bg-yellow-50 border-yellow-300"
+                      >
+                        <Star className="h-4 w-4 mr-1" />
+                        Avaliar
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -532,6 +592,15 @@ export default function AppointmentsPage() {
           ))}
         </div>
       </div>
+      
+      {/* Modal de Avaliação */}
+      {reviewModalOpen && selectedAppointment && (
+        <ReviewModal
+          appointment={selectedAppointment}
+          onClose={() => setReviewModalOpen(false)}
+          onSubmit={submitReview}
+        />
+      )}
     </div>
   )
 }

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Star, MapPin, DollarSign, Calendar, Clock, CheckCircle2, Award, User } from 'lucide-react'
+import { Star, MapPin, DollarSign, Calendar, Clock, CheckCircle2, Award, User, Heart } from 'lucide-react'
 import Header from '@/components/Header'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -19,6 +19,9 @@ export default function ProfessionalProfilePage() {
   const [availability, setAvailability] = useState([])
   const [availableDates, setAvailableDates] = useState([])
   const [availableTimes, setAvailableTimes] = useState([])
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [reviews, setReviews] = useState([])
+  const [averageRating, setAverageRating] = useState(0)
 
   // Buscar profissional e disponibilidade da API
   useEffect(() => {
@@ -63,6 +66,26 @@ export default function ProfessionalProfilePage() {
             }
           }
           setAvailableDates(dates)
+        }
+        
+        // Buscar avaliações
+        const reviewsResponse = await fetch(`${API_URL}/api/reviews/professional/${id}`)
+        if (reviewsResponse.ok) {
+          const reviewsData = await reviewsResponse.json()
+          setReviews(reviewsData.reviews || [])
+          setAverageRating(reviewsData.average_rating || 0)
+        }
+        
+        // Verificar se está nos favoritos (apenas se estiver logado)
+        const token = localStorage.getItem('vitabrasil_token')
+        if (token) {
+          const favoriteResponse = await fetch(`${API_URL}/api/reviews/favorites/${id}/check`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+          if (favoriteResponse.ok) {
+            const favoriteData = await favoriteResponse.json()
+            setIsFavorite(favoriteData.is_favorite)
+          }
         }
       } catch (err) {
         console.error('Error fetching data:', err)
@@ -112,6 +135,46 @@ export default function ProfessionalProfilePage() {
     
     setAvailableTimes(times)
   }, [selectedDate, availability])
+
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      alert('Faça login para favoritar profissionais')
+      navigate('/login')
+      return
+    }
+
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'https://vitabrasil-backend-production.up.railway.app'
+      const token = localStorage.getItem('vitabrasil_token')
+      
+      if (isFavorite) {
+        // Remover dos favoritos
+        const response = await fetch(`${API_URL}/api/reviews/favorites/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        
+        if (response.ok) {
+          setIsFavorite(false)
+          alert('❤️ Removido dos favoritos')
+        }
+      } else {
+        // Adicionar aos favoritos
+        const response = await fetch(`${API_URL}/api/reviews/favorites/${id}`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        
+        if (response.ok) {
+          setIsFavorite(true)
+          alert('❤️ Adicionado aos favoritos!')
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error)
+      alert('Erro ao atualizar favoritos')
+    }
+  }
 
   const handleBooking = async () => {
     if (!user) {
@@ -225,19 +288,34 @@ export default function ProfessionalProfilePage() {
                     </div>
                   )}
                   <div className="flex-1">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                      {professional.preferred_name || professional.name}
-                    </h1>
+                    <div className="flex items-center justify-between mb-2">
+                      <h1 className="text-3xl font-bold text-gray-900">
+                        {professional.preferred_name || professional.name}
+                      </h1>
+                      {user && user.userType === 'patient' && (
+                        <button
+                          onClick={handleToggleFavorite}
+                          className={`p-3 rounded-full transition-all ${
+                            isFavorite 
+                              ? 'bg-red-100 text-red-600 hover:bg-red-200' 
+                              : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                          }`}
+                          title={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                        >
+                          <Heart className={`h-6 w-6 ${isFavorite ? 'fill-current' : ''}`} />
+                        </button>
+                      )}
+                    </div>
                     <p className="text-xl text-gray-600 mb-3">{professional.profession}</p>
                     
                     <div className="flex items-center gap-4 mb-3">
                       <div className="flex items-center gap-1">
                         <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                         <span className="font-semibold">
-                          {professional.average_rating ? professional.average_rating.toFixed(1) : 'Novo'}
+                          {averageRating > 0 ? averageRating.toFixed(1) : 'Novo'}
                         </span>
-                        {professional.total_reviews > 0 && (
-                          <span className="text-gray-500">({professional.total_reviews} avaliações)</span>
+                        {reviews.length > 0 && (
+                          <span className="text-gray-500">({reviews.length} avaliações)</span>
                         )}
                       </div>
                     </div>
@@ -290,9 +368,42 @@ export default function ProfessionalProfilePage() {
                 <CardTitle>Avaliações dos Pacientes</CardTitle>
               </CardHeader>
               <CardContent>
-                {professional.total_reviews > 0 ? (
-                  <div className="space-y-4">
-                    <p className="text-gray-600">Sistema de avaliações em desenvolvimento</p>
+                {reviews.length > 0 ? (
+                  <div className="space-y-6">
+                    {reviews.map((review) => (
+                      <div key={review.id} className="border-b border-gray-200 pb-4 last:border-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-blue-400 flex items-center justify-center">
+                              <span className="text-white font-semibold">
+                                {review.patient_name.charAt(0)}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-gray-900">{review.patient_name}</p>
+                              <div className="flex items-center gap-1">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`h-4 w-4 ${
+                                      i < review.rating
+                                        ? 'fill-yellow-400 text-yellow-400'
+                                        : 'text-gray-300'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          <span className="text-sm text-gray-500">
+                            {new Date(review.created_at).toLocaleDateString('pt-BR')}
+                          </span>
+                        </div>
+                        {review.comment && (
+                          <p className="text-gray-700 ml-12">{review.comment}</p>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <div className="text-center py-8">

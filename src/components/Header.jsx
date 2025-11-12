@@ -36,12 +36,20 @@ export default function Header() {
 
                 {/* Menu específico para PACIENTES */}
                 {isPatient && (
-                  <Link to="/search">
-                    <Button variant="ghost" size="sm">
-                      <Search className="h-4 w-4 mr-2" />
-                      Buscar Médico
-                    </Button>
-                  </Link>
+                  <>
+                    <Link to="/search">
+                      <Button variant="ghost" size="sm">
+                        <Search className="h-4 w-4 mr-2" />
+                        Buscar Médico
+                      </Button>
+                    </Link>
+                    <Link to="/favorites">
+                      <Button variant="ghost" size="sm">
+                        <Heart className="h-4 w-4 mr-2" />
+                        Favoritos
+                      </Button>
+                    </Link>
+                  </>
                 )}
 
                 <Link to="/profile">

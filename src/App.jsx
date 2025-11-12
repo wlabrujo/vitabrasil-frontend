@@ -16,6 +16,7 @@ import MyPatientsPage from './pages/MyPatientsPage'
 import FinancialPage from './pages/FinancialPage'
 import SchedulePage from './pages/SchedulePage'
 import AdminPage from './pages/AdminPage'
+import FavoritesPage from './pages/FavoritesPage'
 import './App.css'
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
           <Route path="/financial" element={<FinancialPage />} />
           <Route path="/schedule" element={<SchedulePage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/favorites" element={<FavoritesPage />} />
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
           <Route path="/terms" element={<TermsOfServicePage />} />
           <Route path="/politica-de-privacidade" element={<PrivacyPolicyPage />} />
